@@ -2,16 +2,18 @@
 
 use crate::wchar::prelude::*;
 
-const SKIP_KEYWORDS: &[&wstr] = &[L!("else"), L!("begin")];
+const SKIP_KEYWORDS: &[&wstr] = &[L!("else")];
 const SUBCOMMAND_KEYWORDS: &[&wstr] = &[
     L!("and"),
     L!("begin"),
     L!("builtin"),
     L!("command"),
+    L!("do"),
     L!("exec"),
     L!("if"),
     L!("not"),
     L!("or"),
+    L!("then"),
     L!("time"),
     L!("while"),
 ];
@@ -32,15 +34,19 @@ const RESERVED_KEYWORDS: &[&wstr] = &[
     L!("break"),
     L!("case"),
     L!("continue"),
+    L!("do"),
+    L!("done"),
     L!("else"),
     L!("end"),
     L!("eval"),
+    L!("fi"),
     L!("read"),
     L!("return"),
     L!("set"),
     L!("status"),
     L!("string"),
     L!("test"),
+    L!("then"),
 ];
 
 // The lists above are purposely implemented separately from the logic below, so that future
