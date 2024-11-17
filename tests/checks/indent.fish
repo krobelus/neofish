@@ -618,3 +618,12 @@ cat $tmpdir/indent_test.fish
 # See that the builtin can be redirected
 printf %s\n a b c | builtin fish_indent | grep b
 # CHECK: b
+
+# TODO: We should not force the line break.
+echo 'if true; then
+    echo body
+fi' | $fish_indent
+# CHECK: if true
+# CHECK: then
+# CHECK: {{    }}echo body
+# CHECK: fi
