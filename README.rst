@@ -2,6 +2,48 @@
       :target: https://cirrus-ci.com/github/fish-shell/fish-shell
       :alt: Cirrus CI Build Status
 
+neofish
+=======
+
+This is a friendly fork of https://fishshell.com/, a Unix shell for interactive use.
+Changes should be upstreamed eventually.
+Our ``master`` branch is frequently rebased on upstream and force-pushed, making it easy to
+see the net difference.
+
+The goals are to offer support for any POSIX features we want to use in interactive commands,
+and being an even better Unix citizen.
+
+Changes:
+
+- ☑ stop overriding ``MANPATH`` which shadows POSIX utilties like ``exec``
+- ☑ familiar abbreviations for modifier keys like ``bind c-x`` for ``bind ctrl-x``
+- ☐ provide regular releases; let distros do their job
+- ☐ add async completions, probably via subprocesses and not threads
+- ☐ implement an autocompletion widget, possibly with fuzzy search
+- ☐ add convenient and familiar syntax for interactive use (possibly opt-in), for example
+    - ☑ ``$()`` in command position (to compute the command to run)
+    - ☑ ``{}`` in command position for command grouping
+    - ☑ ``()`` in command position for subshells
+    - ☑ control flow like  ``if foo; then; fi``, ``for; do; done``, ``case``, ``esac``.
+    - ☑ ``foo=bar`` global variable assignments
+    - ☐ POSIX-style single quotes
+    - ☐ POSIX heredocs (`cat << EOF`)
+    - ☑ variables like ``$?``, ``$$``, ``$#`` and ``$@``
+    - ☐ ``${foo#prefix}`` variable expansion
+    - ☐ maybe add process substitution (``<(foo)``)
+    - ☐ maybe add nestable/raw quoting syntax
+- ☐ comprehensive error handling for all of the above
+
+Here are quick installation instructions (see the upstream README below for more details):
+
+.. code:: shell
+
+   mkdir build; cd build
+   cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local
+   make
+   make install
+
+
 `fish <https://fishshell.com/>`__ - the friendly interactive shell |Build Status| |Cirrus CI|
 =============================================================================================
 
