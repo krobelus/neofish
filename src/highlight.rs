@@ -1096,6 +1096,8 @@ impl<'s> Highlighter<'s> {
             | ParseKeyword::kw_function
             | ParseKeyword::kw_if
             | ParseKeyword::kw_in
+            | ParseKeyword::kw_lbrace
+            | ParseKeyword::kw_rbrace
             | ParseKeyword::kw_switch
             | ParseKeyword::kw_then
             | ParseKeyword::kw_while => role = HighlightRole::keyword,

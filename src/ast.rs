@@ -1266,6 +1266,7 @@ impl CheckParse for JobConjunction {
                 ParseKeyword::kw_case
                     | ParseKeyword::kw_done
                     | ParseKeyword::kw_end
+                    | ParseKeyword::kw_rbrace
                     | ParseKeyword::kw_else
                     | ParseKeyword::kw_fi
             )
@@ -1998,12 +1999,12 @@ define_token_node!(TokenRedirection, redirection);
 
 define_keyword_node!(DecoratedStatementDecorator, kw_command, kw_builtin, kw_exec);
 define_keyword_node!(JobConjunctionDecorator, kw_and, kw_or);
-define_keyword_node!(KeywordBegin, kw_begin);
+define_keyword_node!(KeywordBegin, kw_begin, kw_lbrace);
 define_keyword_node!(KeywordCase, kw_case);
 define_keyword_node!(KeywordDo, kw_do);
 define_keyword_node!(KeywordElse, kw_else);
-define_keyword_node!(KeywordEnd, kw_end);
-define_keyword_node!(KeywordEndOrDone, kw_end, kw_done);
+define_keyword_node!(KeywordEnd, kw_end, kw_rbrace);
+define_keyword_node!(KeywordEndOrDone, kw_end, kw_done, kw_rbrace);
 define_keyword_node!(KeywordEndOrFi, kw_end, kw_done);
 define_keyword_node!(KeywordFor, kw_for);
 define_keyword_node!(KeywordFunction, kw_function);
@@ -3430,6 +3431,22 @@ impl<'s> Populator<'s> {
                             "'fi' outside of a block"
                         );
                     }
+                    ParseKeyword::kw_lbrace => {
+                        parse_error!(
+                            self,
+                            tok,
+                            ParseErrorCode::unbalancing_end,
+                            "'{' outside of a block"
+                        );
+                    }
+                    ParseKeyword::kw_rbrace => {
+                        parse_error!(
+                            self,
+                            tok,
+                            ParseErrorCode::unbalancing_end,
+                            "'}' outside of a block"
+                        );
+                    }
                     _ => {
                         internal_error!(
                             self,
@@ -3670,6 +3687,8 @@ impl<'s> Populator<'s> {
                 ParseKeyword::kw_do,
                 ParseKeyword::kw_function,
                 ParseKeyword::kw_if,
+                ParseKeyword::kw_lbrace,
+                ParseKeyword::kw_rbrace,
                 ParseKeyword::kw_switch,
                 ParseKeyword::kw_then,
                 ParseKeyword::kw_while,
@@ -3684,8 +3703,13 @@ impl<'s> Populator<'s> {
 
             // Likewise if the next token doesn't look like an argument at all. This corresponds to
             // e.g. a "naked if".
-            let naked_invocation_invokes_help = ![ParseKeyword::kw_begin, ParseKeyword::kw_end]
-                .contains(&self.peek_token(0).keyword);
+            let naked_invocation_invokes_help = ![
+                ParseKeyword::kw_begin,
+                ParseKeyword::kw_end,
+                ParseKeyword::kw_lbrace,
+                ParseKeyword::kw_rbrace,
+            ]
+            .contains(&self.peek_token(0).keyword);
             if naked_invocation_invokes_help
                 && [ParseTokenType::end, ParseTokenType::terminate]
                     .contains(&self.peek_token(1).typ)
@@ -3702,7 +3726,8 @@ impl<'s> Populator<'s> {
             ParseKeyword::kw_for
             | ParseKeyword::kw_while
             | ParseKeyword::kw_function
-            | ParseKeyword::kw_begin => {
+            | ParseKeyword::kw_begin
+            | ParseKeyword::kw_lbrace => {
                 let embedded = self.allocate_visit::<BlockStatement>();
                 Box::new(StatementVariant::BlockStatement(*embedded))
             }
@@ -3714,7 +3739,10 @@ impl<'s> Populator<'s> {
                 let embedded = self.allocate_visit::<SwitchStatement>();
                 Box::new(StatementVariant::SwitchStatement(*embedded))
             }
-            ParseKeyword::kw_done | ParseKeyword::kw_end | ParseKeyword::kw_fi => {
+            ParseKeyword::kw_done
+            | ParseKeyword::kw_end
+            | ParseKeyword::kw_fi
+            | ParseKeyword::kw_rbrace => {
                 // 'end' is forbidden as a command.
                 // For example, `if end` or `while end` will produce this error.
                 // We still have to descend into the decorated statement because
@@ -3748,7 +3776,7 @@ impl<'s> Populator<'s> {
                 let embedded = self.allocate_visit::<FunctionHeader>();
                 BlockStatementHeaderVariant::FunctionHeader(*embedded)
             }
-            ParseKeyword::kw_begin => {
+            ParseKeyword::kw_begin | ParseKeyword::kw_lbrace => {
                 let embedded = self.allocate_visit::<BeginHeader>();
                 BlockStatementHeaderVariant::BeginHeader(*embedded)
             }
@@ -4058,13 +4086,15 @@ fn keyword_for_token(tok: TokenType, token: &wstr) -> ParseKeyword {
     let mut result = ParseKeyword::none;
     let mut needs_expand = false;
     let mut all_chars_valid = true;
-    for c in token.chars() {
-        if !is_keyword_char(c) {
-            all_chars_valid = false;
-            break;
+    if token != "{" && token != "}" {
+        for c in token.chars() {
+            if !is_keyword_char(c) {
+                all_chars_valid = false;
+                break;
+            }
+            // If we encounter a quote, we need expansion.
+            needs_expand = needs_expand || c == '"' || c == '\'' || c == '\\'
         }
-        // If we encounter a quote, we need expansion.
-        needs_expand = needs_expand || c == '"' || c == '\'' || c == '\\'
     }
 
     if all_chars_valid {

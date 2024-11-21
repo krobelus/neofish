@@ -86,8 +86,10 @@ pub enum ParseKeyword {
     kw_function,
     kw_if,
     kw_in,
+    kw_lbrace,
     kw_not,
     kw_or,
+    kw_rbrace,
     kw_switch,
     kw_then,
     kw_time,
@@ -216,7 +218,6 @@ impl ParseKeyword {
     /// Return the keyword as a string.
     pub fn to_wstr(self) -> &'static wstr {
         match self {
-            ParseKeyword::kw_exclam => L!("!"),
             ParseKeyword::kw_and => L!("and"),
             ParseKeyword::kw_begin => L!("begin"),
             ParseKeyword::kw_builtin => L!("builtin"),
@@ -226,14 +227,17 @@ impl ParseKeyword {
             ParseKeyword::kw_done => L!("done"),
             ParseKeyword::kw_else => L!("else"),
             ParseKeyword::kw_end => L!("end"),
+            ParseKeyword::kw_exclam => L!("!"),
             ParseKeyword::kw_exec => L!("exec"),
             ParseKeyword::kw_fi => L!("fi"),
             ParseKeyword::kw_for => L!("for"),
             ParseKeyword::kw_function => L!("function"),
             ParseKeyword::kw_if => L!("if"),
             ParseKeyword::kw_in => L!("in"),
+            ParseKeyword::kw_lbrace => L!("{"),
             ParseKeyword::kw_not => L!("not"),
             ParseKeyword::kw_or => L!("or"),
+            ParseKeyword::kw_rbrace => L!("}"),
             ParseKeyword::kw_switch => L!("switch"),
             ParseKeyword::kw_then => L!("then"),
             ParseKeyword::kw_time => L!("time"),
@@ -253,6 +257,8 @@ impl From<&wstr> for ParseKeyword {
     fn from(s: &wstr) -> Self {
         match s {
             _ if s == "!" => ParseKeyword::kw_exclam,
+            _ if s == "{" => ParseKeyword::kw_lbrace,
+            _ if s == "}" => ParseKeyword::kw_rbrace,
             _ if s == "and" => ParseKeyword::kw_and,
             _ if s == "begin" => ParseKeyword::kw_begin,
             _ if s == "builtin" => ParseKeyword::kw_builtin,

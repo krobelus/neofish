@@ -27,9 +27,9 @@ use crate::job_group::JobGroup;
 use crate::operation_context::OperationContext;
 use crate::parse_constants::{
     parse_error_offset_source_start, ParseError, ParseErrorCode, ParseErrorList, ParseKeyword,
-    ParseTokenType, StatementDecoration, CALL_STACK_LIMIT_EXCEEDED_ERR_MSG,
-    ERROR_NO_BRACE_GROUPING, ERROR_TIME_BACKGROUND, FAILED_EXPANSION_VARIABLE_NAME_ERR_MSG,
-    ILLEGAL_FD_ERR_MSG, INFINITE_FUNC_RECURSION_ERR_MSG, WILDCARD_ERR_MSG,
+    ParseTokenType, StatementDecoration, CALL_STACK_LIMIT_EXCEEDED_ERR_MSG, ERROR_TIME_BACKGROUND,
+    FAILED_EXPANSION_VARIABLE_NAME_ERR_MSG, ILLEGAL_FD_ERR_MSG, INFINITE_FUNC_RECURSION_ERR_MSG,
+    WILDCARD_ERR_MSG,
 };
 use crate::parse_tree::{LineCounter, NodeRef, ParsedSourceRef};
 use crate::parse_util::parse_util_unescape_wildcards;
@@ -364,10 +364,6 @@ impl<'a> ExecutionContext {
                 error.push(' ');
                 error.push_utfstr(&escape(&event_args[0]));
             }
-        }
-
-        if cmd.as_char_slice().first() == Some(&'{' /*}*/) {
-            error.push_utfstr(&wgettext!(ERROR_NO_BRACE_GROUPING));
         }
 
         // Here we want to report an error (so it shows a backtrace).
