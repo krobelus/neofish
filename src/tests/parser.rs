@@ -598,8 +598,6 @@ fn test_new_parser_errors() {
     validate!("if true ; case ; end", ParseErrorCode::generic);
 
     validate!("true | and", ParseErrorCode::andor_in_pipeline);
-
-    validate!("a=", ParseErrorCode::bare_variable_assignment);
 }
 
 #[test]

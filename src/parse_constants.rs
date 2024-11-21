@@ -123,11 +123,10 @@ pub enum ParseErrorCode {
     tokenizer_unterminated_escape,
     tokenizer_other,
 
-    unbalancing_end,          // end outside of block
-    unbalancing_else,         // else outside of if
-    unbalancing_case,         // case outside of switch
-    bare_variable_assignment, // a=b without command
-    andor_in_pipeline,        // "and" or "or" after a pipe
+    unbalancing_end,   // end outside of block
+    unbalancing_else,  // else outside of if
+    unbalancing_case,  // case outside of switch
+    andor_in_pipeline, // "and" or "or" after a pipe
 }
 
 // The location of a pipeline.
