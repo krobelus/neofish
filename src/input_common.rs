@@ -443,6 +443,31 @@ pub fn update_wait_on_sequence_key_ms(vars: &EnvStack) {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+#[repr(u8)]
+pub(crate) enum ClientOS {
+    Bsd,
+    Linux,
+    macOS,
+    Unknown,
+}
+
+impl std::fmt::Display for ClientOS {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            ClientOS::Bsd => "bsd",
+            ClientOS::Linux => "linux",
+            ClientOS::macOS => "macos",
+            ClientOS::Unknown => "unknown",
+        };
+        f.write_str(name)
+    }
+}
+
+// As first approximation, use the target OS. This should be overwritten by the XTGETTCAP
+// query later.
+pub(crate) static CLIENT_OS: AtomicU8 = AtomicU8::new(ClientOS::Unknown as _);
+
 static TERMINAL_PROTOCOLS: AtomicBool = AtomicBool::new(false);
 static BRACKETED_PASTE: AtomicBool = AtomicBool::new(false);
 
@@ -469,7 +494,8 @@ pub fn kitty_progressive_enhancements_query() -> &'static [u8] {
     b"\x1b[?u"
 }
 
-static IS_TMUX: RelaxedAtomicBool = RelaxedAtomicBool::new(false);
+pub(crate) static IS_TMUX: RelaxedAtomicBool = RelaxedAtomicBool::new(false);
+
 pub static IN_MIDNIGHT_COMMANDER_PRE_CSI_U: RelaxedAtomicBool = RelaxedAtomicBool::new(false);
 static IN_ITERM_PRE_CSI_U: RelaxedAtomicBool = RelaxedAtomicBool::new(false);
 
@@ -485,6 +511,20 @@ pub fn terminal_protocol_hacks() {
                 };
                 version < (99, 5, 6)
             }),
+    );
+    CLIENT_OS.store(
+        (if cfg!(target_os = "macos")
+            || var_os("LC_TERMINAL").is_some_and(|term| term.as_os_str().as_bytes() == b"iTerm2")
+        {
+            ClientOS::macOS
+        } else if cfg!(bsd) {
+            ClientOS::Bsd
+        } else if cfg!(target_os = "linux") {
+            ClientOS::Linux
+        } else {
+            ClientOS::Unknown
+        }) as _,
+        Ordering::Relaxed,
     );
 }
 
@@ -1358,6 +1398,16 @@ pub trait InputEventQueuer {
         if key == b"cuu" && matches!(&value[..], b"\x1b[%p1%dA" | b"\\E[%p1%dA") {
             CURSOR_UP_SUPPORTED.store(true);
             FLOG!(reader, "Cursor up is supported");
+        }
+        if key == b"kitty-query-os_name" {
+            let os = match &value[..] {
+                b"bsd" => ClientOS::Bsd,
+                b"macos" => ClientOS::macOS,
+                b"linux" => ClientOS::Linux,
+                _ => ClientOS::Unknown,
+            };
+            CLIENT_OS.store(os as _, Ordering::Relaxed);
+            FLOG!(reader, "Client OS: ", os);
         }
         return None;
     }
